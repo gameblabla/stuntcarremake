@@ -1113,42 +1113,74 @@ static float lastFrame = 0.0f;
 /*	Description:	Output track menu text													*/
 /*	======================================================================================= */
 #ifdef linux
-#define FIRSTMENU SDLK_1
-#define STARTMENU SDLK_s
-#define LEAGUEMENU SDLK_l
+#define FIRSTMENU SDLK_LALT
+#define STARTMENU SDLK_LCTRL
+#define LEAGUEMENU SDLK_LSHIFT
 #else
 #define FIRSTMENU '1'
 #define STARTMENU 'S'
 #define LEAGUEMENU 'L'
 #endif
 
+unsigned int waittime = 0;
+int track_number = 0;
+
 static void HandleTrackMenu( CDXUTTextHelper &txtHelper )
 	{
-	long i, track_number;
+	int trackselect_changed = 0;
+	long i;
 	UINT firstMenuOption, lastMenuOption;
 	txtHelper.SetInsertionPos( 2+(wideScreen?10:0), 15*8 );
-	txtHelper.DrawTextLine( L"Choose track :-" );
+	txtHelper.DrawTextLine( L"Choose track (L-R to switch)" );
 
 	for (i = 0, firstMenuOption = FIRSTMENU; i < NUM_TRACKS; i++)
 		{
-		txtHelper.DrawFormattedTextLine( L"'%d' -  " STRING, (i+1), GetTrackName(i) );
+		txtHelper.DrawFormattedTextLine( L" -  " STRING, GetTrackName(i) );
 		}
 	lastMenuOption = i + FIRSTMENU - 1;
 
 	// output instructions
 	const D3DSURFACE_DESC *pd3dsdBackBuffer = DXUTGetBackBufferSurfaceDesc();
 	txtHelper.SetInsertionPos( 2+(wideScreen?10:0), pd3dsdBackBuffer->Height-15*8 );
-	txtHelper.DrawFormattedTextLine( L"Current track - " STRING L".  Press 'S' to select, Escape to quit", (TrackID == NO_TRACK ? L"None" : GetTrackName(TrackID)));
-	txtHelper.DrawTextLine( L"'L' to switch Super League On/Off");
+	txtHelper.DrawFormattedTextLine( L"Current track - " STRING L".  Press A to select, POWER to quit", (TrackID == NO_TRACK ? L"None" : GetTrackName(TrackID)));
+	txtHelper.DrawTextLine( L"Y to switch Super League On/Off");
 
-	if (((keyPress >= firstMenuOption) && (keyPress <= lastMenuOption)) || (keyPress == LEAGUEMENU))
+	if (waittime > 30)
+	{
+		if(keyPress == SDLK_TAB || keyPress == SDLK_LEFT)
 		{
-		if(keyPress == LEAGUEMENU) {
+			track_number--;
+			
+			if (track_number < 0) track_number = 0;
+			trackselect_changed = 1;
+			waittime = 0;
+			
+		}
+		else if(keyPress == SDLK_BACKSPACE || keyPress == SDLK_RIGHT)
+		{
+			track_number++;
+			if (track_number > 7) track_number = 7;
+			trackselect_changed = 1;
+			waittime = 0;
+		}
+	}
+	else
+	{
+		waittime++;
+	}
+	
+	if(keyPress == LEAGUEMENU) {
+		trackselect_changed = 1;
+	}
+
+		if (trackselect_changed == 1)
+		{
+			if(keyPress == LEAGUEMENU) {
 			bSuperLeague = !bSuperLeague;
 			track_number = TrackID;
 			CreateCarVertexBuffer(DXUTGetD3DDevice());	// recreate car
-		} else 
-			track_number = keyPress - firstMenuOption;	// start at 0
+			} 
+			//track_number = keyPress - firstMenuOption;	// start at 0*/
 
 		if (! ConvertAmigaTrack(track_number))
 			{
@@ -1169,6 +1201,8 @@ static void HandleTrackMenu( CDXUTTextHelper &txtHelper )
 			}
 
 		keyPress = '\0';
+		trackselect_changed = 0;
+		SDL_Delay(60);
 		}
 
 	if ((keyPress == STARTMENU) && (TrackID != NO_TRACK))
@@ -1196,19 +1230,19 @@ static void HandleTrackPreview( CDXUTTextHelper &txtHelper )
 	// output instructions
 	const D3DSURFACE_DESC *pd3dsdBackBuffer = DXUTGetBackBufferSurfaceDesc();
 	txtHelper.SetInsertionPos( 2+(wideScreen?10:0), pd3dsdBackBuffer->Height-15*9 );
-	txtHelper.DrawFormattedTextLine( L"Selected track - " STRING L".  Press 'S' to start game", (TrackID == NO_TRACK ? L"None" : GetTrackName(TrackID)));
-	txtHelper.DrawTextLine( L"'M' for track menu, Escape to quit");
-	txtHelper.DrawTextLine( L"(Press F4 to change scenery, F9 / F10 to adjust frame rate)" );
+	txtHelper.DrawFormattedTextLine( L"Selected track - " STRING L".  A to start game", (TrackID == NO_TRACK ? L"None" : GetTrackName(TrackID)));
+	txtHelper.DrawTextLine( L"Select for track menu, Escape to quit");
+	//txtHelper.DrawTextLine( L"(Press F4 to change scenery, F9 / F10 to adjust frame rate)" );
 
 	txtHelper.SetInsertionPos( 2+(wideScreen?10:0), pd3dsdBackBuffer->Height-15*6 );
 	txtHelper.DrawTextLine( L"Keyboard controls during game :-" );
 	#if defined(PANDORA) || defined(PYRA)
-	txtHelper.DrawTextLine( L"  DPad = Steer, (X) = Accelerate, (B) = Brake, (R) = Nitro" );
+	txtHelper.DrawTextLine( L"  DPad = Steer, (A) = Accelerate, (B) = Brake, (R) = Nitro" );
 	#else
-	txtHelper.DrawTextLine( L"  S = Steer left, D = Steer right, Enter = Accelerate, Space = Brake" );
+	txtHelper.DrawTextLine( L"  Dpad = Steer, A = Accelerate, Y = Brake" );
 	#endif
-	txtHelper.DrawTextLine( L"  R = Point car in opposite direction, P = Pause, O = Unpause" );
-	txtHelper.DrawTextLine( L"  M = Back to track menu, Escape = Quit" );
+	//txtHelper.DrawTextLine( L"  R = Point car in opposite direction" );
+	txtHelper.DrawTextLine( L"  Select = Back to track menu, POWER = Quit" );
 
 	if (keyPress == STARTMENU)
 		{
@@ -1860,6 +1894,7 @@ bool process_events()
 					break;
 #endif
 				case SDLK_m:
+				case SDLK_ESCAPE:
 					if (GameMode != TRACK_MENU)
 					{
 						GameMode = TRACK_MENU;
@@ -1870,11 +1905,11 @@ bool process_events()
 						ResetDrawBridge();
 					}
 					break;
-
-				case SDLK_o:
+/*
+				case SDLK_LCTRL:
 					bPaused = FALSE;
 					break;
-
+*/
 				case SDLK_p:
 					bPaused = TRUE;
 					break;
@@ -1906,6 +1941,7 @@ bool process_events()
 				case SDLK_END:
 #else
 				case SDLK_DOWN:
+				case SDLK_LALT:
 #endif
 					lastInput |= KEY_P1_BRAKE;
 					break;
@@ -1914,17 +1950,22 @@ bool process_events()
 				case SDLK_PAGEDOWN:
 #else
 				case SDLK_UP:
+				case SDLK_LCTRL:
 #endif
+					//bPaused = FALSE;
 					lastInput |= KEY_P1_ACCEL;
 					break;
 
-				case SDLK_ESCAPE:
+				case SDLK_HOME:
 					return false;
 				}
             break;
         case SDL_KEYUP:
 			keyPress = 0;
             switch( event.key.keysym.sym ) {
+				case SDLK_HOME:
+					return false;
+				break;
 				// controls for Car Behaviour, Player 1
 				case SDLK_LEFT:
 					lastInput &= ~KEY_P1_LEFT;
@@ -2140,8 +2181,8 @@ int main(int argc, const char** argv)
 			screenH = 480;
 		}
 	} else {
-		screenW = 800;
-		screenH = 480;
+		screenW = 320;
+		screenH = 240;
 	}
 #endif
 #ifdef USE_SDL2
