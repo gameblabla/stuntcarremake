@@ -21,7 +21,7 @@
 #include "wavefunctions.h"
 #include "Atlas.h"
 #include "version.h"
-
+#include <GL/gl.h>
 #ifdef linux
 #include <unistd.h>
 #define STRING "%S"
@@ -2181,8 +2181,8 @@ int main(int argc, const char** argv)
 			screenH = 480;
 		}
 	} else {
-		screenW = 320;
-		screenH = 240;
+		screenW = 640;
+		screenH = 480;
 	}
 #endif
 #ifdef USE_SDL2
@@ -2229,7 +2229,7 @@ int main(int argc, const char** argv)
 		}
 	}
 #ifndef USE_SDL2
-	screen = SDL_SetVideoMode( screenW, screenH, 32, flags );
+	screen = SDL_SetVideoMode( screenW, screenH, 16, flags );
     if ( screen == NULL ) {
 		// fallback to no MSAA
 		GL_MSAA=0;

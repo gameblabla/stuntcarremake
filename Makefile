@@ -4,7 +4,7 @@
 
 CC=g++
 #PANDORA=1
-DEBUG=1
+DEBUG=0
 
 # general compiler settings
 ifeq ($(M32),1)
@@ -56,6 +56,18 @@ ifeq ($(EMSCRIPTEN),1)
         CXX= emc++
 endif
 
+ifeq ($(GCW0),1)
+		CC = /opt/gcw0-toolchain/bin/mipsel-linux-g++
+		CXX = /opt/gcw0-toolchain/bin/mipsel-linux-g++
+        FLAGS= -O3 -fsigned-char
+        FLAGS+= 
+        FLAGS+= 
+        LDFLAGS= -Wl,--as-needed -s -lGL
+        SDL=2
+       # HAVE_GLES=1
+endif
+
+
 FLAGS+= -pipe -fpermissive
 CFLAGS=$(FLAGS) -Wno-conversion-null -Wno-write-strings -ICommon
 LDFLAGS=$(FLAGS)
@@ -94,7 +106,7 @@ ifeq ($(SDL),2)
 	CFLAGS += -DUSE_SDL2
 else
 	SDL_=
-	CFLAGS+=`sdl-config --cflags`
+	CFLAGS+=`/opt/gcw0-toolchain/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/sdl-config --cflags`
 	TTF_ = SDL_ttf
 endif
 
@@ -102,7 +114,7 @@ endif
 ifeq ($(PANDORA),1)
 	CFLAGS+= `pkg-config --cflags $(SDL_) $(TTF_) openal`
 else
-	CFLAGS+= `pkg-config --cflags $(SDL_) $(TTF_) openal`
+	CFLAGS+= `/opt/gcw0-toolchain/bin/pkg-config --cflags $(SDL_) $(TTF_) openal`
 endif
 
 # dynamic only libraries
@@ -120,10 +132,10 @@ ifeq ($(MINGW),1)
 	LIB += -lsocket -lws2_32 -lwsock32 -lwinmm -lOpenAL32
 else
 	ifeq ($(HAVE_GLES),1)
-		LIB += -lGLES_CM -lEGL
+		LIB += -lGLESv1_CM -lEGL
 		CFLAGS += -DHAVE_GLES
 	else
-		LIB += -lGL -lGLU
+		LIB += -lGL
 	endif
 	LIB += -lopenal
 endif

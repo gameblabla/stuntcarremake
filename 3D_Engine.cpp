@@ -8,7 +8,7 @@
 /*	Include files */
 /*	============= */
 #include "dxstdafx.h"
-
+#include <GL/gl.h>
 #include "StuntCarRacer.h"
 #include "3D_Engine.h"
 

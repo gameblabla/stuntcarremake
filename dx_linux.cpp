@@ -1,5 +1,6 @@
 #ifdef linux
 #include "dx_linux.h"
+#include <GL/gl.h>
 // use a light version of stb_image
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
